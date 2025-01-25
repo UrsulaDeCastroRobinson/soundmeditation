@@ -10,19 +10,37 @@ export default function Home() {
   const [eventDetails, setEventDetails] = useState({
     max_spots: 0,
     spots_taken: 0,
+    address: '',
   });
   const [message, setMessage] = useState('');
+  const [eventDate, setEventDate] = useState('');
 
-  // Fetch event details and attendees when the page loads
   useEffect(() => {
     fetchEventDetails();
     fetchAttendees();
+    calculateEventDate();
   }, []);
 
-  // Fetch event details from the API
+  const calculateEventDate = () => {
+    try {
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const daysUntilSunday = 7 - dayOfWeek;
+      const upcomingSunday = new Date(today);
+      upcomingSunday.setDate(today.getDate() + daysUntilSunday);
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      setEventDate(upcomingSunday.toLocaleDateString(undefined, options));
+    } catch (error) {
+      console.error("Error calculating event date:", error);
+    }
+  };
+
   const fetchEventDetails = async () => {
     try {
       const response = await fetch('/api/event-details');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
 
       if (data.error) {
@@ -31,27 +49,32 @@ export default function Home() {
         setEventDetails(data);
         if (data.spots_taken >= data.max_spots) {
           setMessage('The event is full. No more registrations are accepted.');
+        } else {
+          setMessage(''); // Clear any previous message if there are still spots available
         }
       }
     } catch (error) {
       console.error("Error fetching event details:", error);
+      setMessage("An error occurred while fetching event details.");
     }
   };
 
-  // Fetch attendees from the API
   const fetchAttendees = async () => {
     try {
       const response = await fetch('/api/attendees');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       if (data) {
         setAttendees(data);
       }
     } catch (error) {
       console.error("Error fetching attendees:", error);
+      setMessage("An error occurred while fetching attendees.");
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -68,15 +91,17 @@ export default function Home() {
         },
         body: JSON.stringify({ name, email, instrument }),
       });
+      if (!response.ok) {
+        const errorData = await response.json();
+        setMessage(errorData.error || 'An error occurred while submitting the form.');
+        return;
+      }
       const data = await response.json();
 
       if (data.success) {
-        // Clear the form fields after successful registration
         setName('');
         setEmail('');
         setInstrument('');
-
-        // Update the list of attendees and event details
         setAttendees([...attendees, { name, instrument }]);
         setEventDetails(data.updatedEventDetails);
         setMessage('Registration successful!');
@@ -93,32 +118,34 @@ export default function Home() {
     <div>
       <h1>Chamber Music Event Registration</h1>
       {message && <p>{message}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Instrument"
-          value={instrument}
-          onChange={(e) => setInstrument(e.target.value)}
-          required
-        />
-        <button type="submit" disabled={eventDetails.spots_taken >= eventDetails.max_spots}>
-          Register
-        </button>
-      </form>
+      {eventDetails.spots_taken < eventDetails.max_spots && (
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Instrument"
+            value={instrument}
+            onChange={(e) => setInstrument(e.target.value)}
+            required
+          />
+          <button type="submit" disabled={eventDetails.spots_taken >= eventDetails.max_spots}>
+            Register
+          </button>
+        </form>
+      )}
 
       <h2>Current Attendees:</h2>
       {attendees.length === 0 ? (
@@ -140,10 +167,10 @@ export default function Home() {
         <>
           <p>Max spots: {eventDetails.max_spots}</p>
           <p>Spots taken: {eventDetails.spots_taken}</p>
+          <p>Address: {eventDetails.address}</p>
+          <p><strong>Event Date:</strong> {eventDate}</p>
         </>
       )}
     </div>
   );
 }
-
-
