@@ -19,7 +19,7 @@ export async function POST(req) {
       );
     }
 
-    const { data: attendees, error: fetchError } = await supabase
+    const { error: fetchError } = await supabase
       .from("attendees")
       .select("name, email");
 
@@ -86,14 +86,5 @@ export async function POST(req) {
   }
 }
 
-// Function to calculate the event date
-const calculateEventDate = () => {
-  const today = new Date();
-  const dayOfWeek = today.getDay();
-  const daysUntilSaturday = 7 - dayOfWeek;
-  const upcomingSaturday = new Date(today);
-  upcomingSaturday.setDate(today.getDate() + daysUntilSaturday);
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return upcomingSaturday.toLocaleDateString(undefined, options);
-};
+
 
