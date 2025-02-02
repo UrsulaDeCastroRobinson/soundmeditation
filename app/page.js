@@ -25,11 +25,11 @@ export default function Home() {
     try {
       const today = new Date();
       const dayOfWeek = today.getDay();
-      const daysUntilSunday = 7 - dayOfWeek;
-      const upcomingSunday = new Date(today);
-      upcomingSunday.setDate(today.getDate() + daysUntilSunday);
+      const daysUntilSaturday = 6 - dayOfWeek;
+      const upcomingSaturday = new Date(today);
+      upcomingSaturday.setDate(today.getDate() + daysUntilSaturday);
       const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      setEventDate(upcomingSunday.toLocaleDateString(undefined, options));
+      setEventDate(upcomingSaturday.toLocaleDateString(undefined, options));
     } catch (error) {
       console.error("Error calculating event date:", error);
     }
@@ -89,7 +89,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, instrument }),
+        body: JSON.stringify({ name, email }),
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -101,8 +101,7 @@ export default function Home() {
       if (data.success) {
         setName('');
         setEmail('');
-        setInstrument('');
-        setAttendees([...attendees, { name, instrument }]);
+        setAttendees([...attendees, { name }]);
         setEventDetails(data.updatedEventDetails);
         setMessage('Registration successful!');
       } else {
@@ -115,17 +114,18 @@ export default function Home() {
   };
 
   return (
-    <div>
-      <h1>Chamber Music Event Registration</h1>
+    <div style={{ backgroundColor: 'black', color: 'white', minHeight: '100vh', padding: '20px' }}>
+      <h1>Sound Meditation Event Registration</h1>
       {message && <p>{message}</p>}
       {eventDetails.spots_taken < eventDetails.max_spots && (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <input
             type="text"
             placeholder="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+            style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}
           />
           <input
             type="email"
@@ -133,15 +133,10 @@ export default function Home() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}
           />
-          <input
-            type="text"
-            placeholder="Instrument"
-            value={instrument}
-            onChange={(e) => setInstrument(e.target.value)}
-            required
-          />
-          <button type="submit" disabled={eventDetails.spots_taken >= eventDetails.max_spots}>
+         
+          <button type="submit" disabled={eventDetails.spots_taken >= eventDetails.max_spots} style={{ padding: '10px', border: 'none', borderRadius: '4px', backgroundColor: '#5bc0de', color: 'white', cursor: 'pointer' }}>
             Register
           </button>
         </form>
@@ -151,10 +146,10 @@ export default function Home() {
       {attendees.length === 0 ? (
         <p>No attendees have registered yet.</p>
       ) : (
-        <ul>
+        <ul style={{ listStyleType: 'none', padding: '0' }}>
           {attendees.map((attendee, index) => (
-            <li key={index}>
-              {attendee.name} - {attendee.instrument}
+            <li key={index} style={{ padding: '10px', borderBottom: '1px solid #ccc' }}>
+              {attendee.name}
             </li>
           ))}
         </ul>
@@ -174,3 +169,4 @@ export default function Home() {
     </div>
   );
 }
+

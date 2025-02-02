@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import sendEmail from '../../../sendEmail'; // Import sendEmail module
+
 
 // Supabase configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -12,36 +12,25 @@ export async function POST(req) {
     const body = await req.json();
     const { name, email, instrument } = body;
 
-    if (!name || !email || !instrument) {
+    if (!name || !email) {
       return NextResponse.json(
-        { error: "Name, email, and instrument are required." },
+        { error: "Name, and email are required." },
         { status: 400 }
       );
     }
 
     const { data: attendees, error: fetchError } = await supabase
       .from("attendees")
-      .select("name, email, instrument");
+      .select("name, email");
 
     if (fetchError) {
       console.error("Error fetching attendees:", fetchError);
       return NextResponse.json({ error: "Error fetching attendees." }, { status: 500 });
-    }
-
-    const pianoUser = attendees.some(
-      (attendee) => attendee.instrument.toLowerCase() === "piano"
-    );
-
-    if (pianoUser && instrument.toLowerCase() === "piano") {
-      return NextResponse.json(
-        { error: "The piano slot is already taken." },
-        { status: 400 }
-      );
-    }
+      }
 
     const { data: attendeeData, error: insertError } = await supabase
       .from("attendees")
-      .insert([{ name, email, instrument }]);
+      .insert([{ name, email }]);
 
     if (insertError) {
       console.error("Error inserting attendee:", insertError);
@@ -77,11 +66,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Error updating event details." }, { status: 500 });
     }
 
-    // Send email to all attendees if the event is full
-    if (updatedSpotsTaken === eventDetails.max_spots) {
-      const eventDate = calculateEventDate(); // Function to calculate the event date
-      sendEmail(attendees, eventDetails, eventDate);
-    }
+   
 
     return NextResponse.json(
       {
@@ -105,10 +90,10 @@ export async function POST(req) {
 const calculateEventDate = () => {
   const today = new Date();
   const dayOfWeek = today.getDay();
-  const daysUntilSunday = 7 - dayOfWeek;
-  const upcomingSunday = new Date(today);
-  upcomingSunday.setDate(today.getDate() + daysUntilSunday);
+  const daysUntilSaturday = 7 - dayOfWeek;
+  const upcomingSaturday = new Date(today);
+  upcomingSaturday.setDate(today.getDate() + daysUntilSaturday);
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return upcomingSunday.toLocaleDateString(undefined, options);
+  return upcomingSaturday.toLocaleDateString(undefined, options);
 };
 
