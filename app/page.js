@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 export default function Home() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [instrument, setInstrument] = useState('');
   const [attendees, setAttendees] = useState([]);
   const [eventDetails, setEventDetails] = useState({
     max_spots: 0,

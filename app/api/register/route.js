@@ -10,7 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { name, email, instrument } = body;
+    const { name, email } = body;
 
     if (!name || !email) {
       return NextResponse.json(
