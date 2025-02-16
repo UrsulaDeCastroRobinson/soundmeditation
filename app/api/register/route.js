@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-
+import sendEmail from "../../../utils/sendEmail";
 
 // Supabase configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -19,15 +19,29 @@ export async function POST(req) {
       );
     }
 
-    const { error: fetchError } = await supabase
+    // Fetch attendees to check for duplicates
+    const { data: attendees, error: fetchError } = await supabase
       .from("attendees")
       .select("name, email");
 
     if (fetchError) {
       console.error("Error fetching attendees:", fetchError);
       return NextResponse.json({ error: "Error fetching attendees." }, { status: 500 });
-      }
+    }
 
+    // Check if the user is already registered
+    const isRegistered = attendees.some(
+      (attendee) => attendee.email === email
+    );
+
+    if (isRegistered) {
+      return NextResponse.json(
+        { error: "This email is already registered." },
+        { status: 400 }
+      );
+    }
+
+    // Insert the new attendee
     const { data: attendeeData, error: insertError } = await supabase
       .from("attendees")
       .insert([{ name, email }]);
@@ -37,6 +51,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Error registering the attendee." }, { status: 500 });
     }
 
+    // Fetch event details
     const { data: eventDetails, error: fetchEventError } = await supabase
       .from("event_details")
       .select("*")
@@ -56,6 +71,7 @@ export async function POST(req) {
       );
     }
 
+    // Update the event details with the new spots taken
     const { error: updateEventError } = await supabase
       .from("event_details")
       .update({ spots_taken: updatedSpotsTaken })
@@ -66,7 +82,8 @@ export async function POST(req) {
       return NextResponse.json({ error: "Error updating event details." }, { status: 500 });
     }
 
-   
+    // Send confirmation email and schedule reminder email
+    await sendEmail(email, name);
 
     return NextResponse.json(
       {
@@ -85,6 +102,5 @@ export async function POST(req) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-
 
 
