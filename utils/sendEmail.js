@@ -16,7 +16,7 @@ const sendEmail = async (recipientEmail, recipientName) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: recipientEmail,
-	cc: 'tom.hosted@gmail.com',
+	bcc: 'tom.hosted@gmail.com',
     subject: 'Sound meditation - registration confirmation',
     text: `Hello ${recipientName},\n\nThank you for registering for the sound meditation at 11 a.m. on ${formattedEventDate}.\n\nThe address is Flat 003, 350 The Highway, E1W 3HU.\n\nWhen you arrive, please call me on 079020 75244 to let you in as intercom doesn't work.\n\nSo that the meditation is not interrupted, please do not bring animals or young children.\n\nThis is a free, community event.\n\nPeace out,\nTom`,
   };
